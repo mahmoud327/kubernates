@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+
+metadata:
+  name: laravel-app
+  labels:
+    app: laravel
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: laravel
+
+  template:
+    metadata:
+      labels:
+        app: laravel
+
+    spec:
+
+      volumes:
+        - name: nginx-config
+          configMap:
+            name: laravel-nginx-config
+
+      containers:
+
+        # =========================
+        # Laravel PHP-FPM
+        # =========================
+        - name: php-fpm
+          image:  laravel-app1
+          imagePullPolicy: Never
+
+          ports:
+            - containerPort: 9000
+              protocol: TCP
+
+          # =========================
+          # Load ALL Laravel ENV
+          # from Secret
+          # =========================
+          envFrom:
+            - secretRef:
+                name: laravel-secrets
+
+        # =========================
+        # Nginx
+        # =========================
+        - name: nginx
+          image: nginx:alpine
+
+          ports:
+            - containerPort: 80
+              protocol: TCP
+
+          volumeMounts:
+            - name: nginx-config
+              mountPath: /etc/nginx/conf.d
